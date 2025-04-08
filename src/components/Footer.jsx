@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 function Footer() {
   return (
-    <footer className="bg-secondary-900 text-gray-400 py-16">
+    <footer className="bg-black text-gray-400 py-16">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand Column */}

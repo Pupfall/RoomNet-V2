@@ -1,15 +1,28 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import logo from '../assets/logo.png'
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+      setIsMenuOpen(false)
+    }
+  }
 
   return (
     <nav className="border-b border-gray-100">
       <div className="container py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-primary-500">
-            RoomNet
+          <Link to="/" className="flex items-center">
+            <img 
+              src={logo} 
+              alt="RoomNet Logo" 
+              className="h-8 w-auto"
+            />
           </Link>
 
           {/* Mobile menu button */}
@@ -43,18 +56,30 @@ function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/take-quiz" className="text-secondary-600 hover:text-primary-500 transition-colors duration-200">
-              Take Quiz
-            </Link>
-            <Link to="/features" className="text-secondary-600 hover:text-primary-500 transition-colors duration-200">
+            <button 
+              onClick={() => scrollToSection('features')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
+            >
               Features
-            </Link>
-            <Link to="/how-it-works" className="text-secondary-600 hover:text-primary-500 transition-colors duration-200">
+            </button>
+            <button 
+              onClick={() => scrollToSection('how-it-works')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
+            >
               How It Works
-            </Link>
-            <Link to="/faq" className="text-secondary-600 hover:text-primary-500 transition-colors duration-200">
+            </button>
+            <button 
+              onClick={() => scrollToSection('faq')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
+            >
               FAQ
-            </Link>
+            </button>
+            <button 
+              onClick={() => scrollToSection('take-quiz')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
+            >
+              Take Quiz
+            </button>
           </div>
 
           {/* Desktop Buttons */}
@@ -71,34 +96,30 @@ function Navbar() {
         {/* Mobile Navigation */}
         <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'} pt-4`}>
           <div className="flex flex-col space-y-4">
-            <Link 
-              to="/take-quiz" 
-              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Take Quiz
-            </Link>
-            <Link 
-              to="/features" 
-              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
-              onClick={() => setIsMenuOpen(false)}
+            <button 
+              onClick={() => scrollToSection('features')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200 text-left"
             >
               Features
-            </Link>
-            <Link 
-              to="/how-it-works" 
-              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
-              onClick={() => setIsMenuOpen(false)}
+            </button>
+            <button 
+              onClick={() => scrollToSection('how-it-works')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200 text-left"
             >
               How It Works
-            </Link>
-            <Link 
-              to="/faq" 
-              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200"
-              onClick={() => setIsMenuOpen(false)}
+            </button>
+            <button 
+              onClick={() => scrollToSection('faq')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200 text-left"
             >
               FAQ
-            </Link>
+            </button>
+            <button 
+              onClick={() => scrollToSection('take-quiz')}
+              className="text-secondary-600 hover:text-primary-500 transition-colors duration-200 text-left"
+            >
+              Take Quiz
+            </button>
             <div className="pt-4 flex flex-col space-y-2">
               <Link 
                 to="/login" 

@@ -8,17 +8,17 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#fff1f1',
-          100: '#ffe1e1',
-          200: '#ffc7c7',
-          300: '#ffa0a0',
-          400: '#ff6666',
-          500: '#FF2C2C',  // Our main brand color
-          600: '#e51f1f',
-          700: '#cc1414',
-          800: '#a60f0f',
-          900: '#8b0000',
-          950: '#4c0000',
+          50: '#fef1f2',
+          100: '#fee2e4',
+          200: '#fec5c9',
+          300: '#fd9aa2',
+          400: '#fb6f7b',
+          500: '#e94057',  // Our main brand color
+          600: '#d11f3a',
+          700: '#b1152d',
+          800: '#931425',
+          900: '#7b1420',
+          950: '#43060e',
         },
         secondary: {
           50: '#f8fafc',

@@ -38,7 +38,7 @@ function Home() {
   return (
     <main>
       {/* Hero Section */}
-      <section className="py-20">
+      <section id="hero" className="py-20">
         <div className="container">
           <div className="max-w-2xl mx-auto text-center">
             <h1 className="text-5xl font-bold mb-6">
@@ -54,10 +54,10 @@ function Home() {
             </p>
             <div className="flex justify-center space-x-4">
               <Link to="/take-quiz" className="btn btn-outline">
-                Take the Quiz
+                Take The Quiz
               </Link>
-              <Link to="/how-it-works" className="btn btn-outline">
-                Learn How It Works
+              <Link to="#how-it-works" className="btn btn-outline">
+                How It Works
               </Link>
             </div>
           </div>
@@ -65,7 +65,7 @@ function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section id="features" className="py-20 bg-gray-50">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Why Choose RoomNet?</h2>
@@ -116,7 +116,7 @@ function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20">
+      <section id="how-it-works" className="py-20">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">How RoomNet Works</h2>
@@ -178,7 +178,7 @@ function Home() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-gray-50">
+      <section id="faq" className="py-20 bg-gray-50">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
@@ -226,15 +226,15 @@ function Home() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 bg-primary-500 text-white">
+      <section id="take-quiz" className="py-20 bg-primary-500 text-white">
         <div className="container">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-4xl font-bold mb-4">Ready to Find Your Perfect Roommate?</h2>
             <p className="text-lg mb-8">
               Join thousands of students who've found their ideal living partners through
-              RoomNet. Start your journey to better campus living today.
+              RoomNet. Start your journey to better campus living today!
             </p>
-            <Link to="/take-quiz" className="btn btn-outline bg-transparent border-white hover:bg-white hover:text-primary-500 inline-block">
+            <Link to="/take-quiz" className="btn border-2 border-white text-white hover:bg-white hover:text-primary-500 transition-all duration-300 hover:scale-105">
               Take the Quiz
             </Link>
           </div>
