@@ -7,6 +7,7 @@ import Register from './Register'
 import EmailConfirmation from './EmailConfirmation'
 import VerifyEmail from './VerifyEmail'
 import Quiz from './Quiz'
+import MatchingProcess from './MatchingProcess'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/email-confirmation" element={<EmailConfirmation />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/quiz" element={<Quiz />} />
+          <Route path="/matching-process" element={<MatchingProcess />} />
         </Routes>
       </div>
       <Footer />
