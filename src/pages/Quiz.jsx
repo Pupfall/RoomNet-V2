@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import Thermostat from '../components/Thermostat'
 
 function Quiz() {
   const navigate = useNavigate()
@@ -13,8 +14,8 @@ function Quiz() {
     const savedFormData = localStorage.getItem('quizFormData')
     return savedFormData ? JSON.parse(savedFormData) : {
       // Basic Info (Step 1)
-    fullName: '',
-    age: '',
+      fullName: '',
+      age: '',
       university: [],
       year: '',
       countryOfOrigin: '',
@@ -26,6 +27,7 @@ function Quiz() {
       cleanliness: '',
       visitors: '',
       smoking: '',
+      preferredTemperature: 72, // Default temperature
       // Lifestyle & Activities (Step 3)
       studyHabits: '',
       hobbies: [],
@@ -355,19 +357,17 @@ function Quiz() {
   }
 
   const handleNext = (e) => {
-    if (e) {
     e.preventDefault()
-    }
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    const nextStep = currentStep + 1
+    if (nextStep <= 4) {  // Updated max steps to 4
+      setCurrentStep(nextStep)
     }
   }
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    const prevStep = currentStep - 1
+    if (prevStep >= 1) {
+      setCurrentStep(prevStep)
     }
   }
 
@@ -408,6 +408,7 @@ function Quiz() {
         cleanliness: formData.cleanliness,
         visitors: formData.visitors,
         smoking: formData.smoking,
+        preferred_temperature: formData.preferredTemperature,
         // Lifestyle & Activities
         study_habits: formData.studyHabits,
         hobbies: formData.hobbies,
@@ -498,6 +499,13 @@ function Quiz() {
     setFormData(prev => ({
       ...prev,
       hobbies: prev.hobbies.filter(hobby => hobby !== hobbyToRemove)
+    }))
+  }
+
+  const handleTemperatureChange = (temp) => {
+    setFormData(prev => ({
+      ...prev,
+      preferredTemperature: temp
     }))
   }
 
@@ -922,6 +930,52 @@ function Quiz() {
         </div>
   )
 
+  const renderTemperaturePreferences = () => (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Temperature Preferences
+          </h2>
+          <p className="mt-2 text-gray-600">
+            Let's find a roommate who shares your comfort zone!
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-b from-[#1a365d] to-[#0f172a] rounded-xl shadow-xl p-8">
+          <div className="space-y-6">
+            <div className="flex justify-center py-8">
+              <Thermostat 
+                value={formData.preferredTemperature} 
+                onChange={handleTemperatureChange}
+              />
+            </div>
+            <div className="mt-6 text-center text-sm text-gray-400">
+              Drag the white dot to set your preferred temperature
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between pt-4">
+          <button
+            type="button"
+            onClick={handlePrevious}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-500 border border-transparent rounded-md shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   const renderLifestyleActivities = () => (
     <div className="bg-white rounded-xl shadow-sm p-8">
       <h2 className="text-2xl font-semibold text-gray-900 mb-2">Lifestyle & Activities</h2>
@@ -1146,14 +1200,15 @@ function Quiz() {
       <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
         <div 
           className="bg-primary-600 h-2.5 rounded-full transition-all duration-300"
-          style={{ width: `${(currentStep / 3) * 100}%` }}
+          style={{ width: `${(currentStep / 4) * 100}%` }}
         ></div>
       </div>
-      <div className="text-right text-sm text-gray-500 mb-8">Step {currentStep} of 3</div>
+      <div className="text-right text-sm text-gray-500 mb-8">Step {currentStep} of 4</div>
 
       {currentStep === 1 && renderBasicInfo()}
       {currentStep === 2 && renderLivingPreferences()}
-      {currentStep === 3 && renderLifestyleActivities()}
+      {currentStep === 3 && renderTemperaturePreferences()}
+      {currentStep === 4 && renderLifestyleActivities()}
     </div>
   )
 }
