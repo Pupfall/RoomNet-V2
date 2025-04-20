@@ -373,99 +373,134 @@ function Quiz() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Form submission started')
+    console.log('Starting form submission with data:', formData)
     
     try {
       // Get the current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser()
+
       if (userError) {
         console.error('Error getting user:', userError)
         throw userError
       }
-      
+
       if (!user) {
-        console.error('No user logged in')
-        alert('Please log in to submit the quiz')
+        console.error('No user found')
         return
       }
 
       console.log('User authenticated:', user.id)
 
-      // Prepare the data for insertion
-      const quizData = {
-        user_id: user.id,
-        // Basic Info
-        full_name: formData.fullName,
-        age_range: formData.age,
-        university: formData.university[0],
-        year: formData.year,
-        country_of_origin: formData.countryOfOrigin,
-        languages: formData.languages,
-        // Living Preferences
-        sleep_time: formData.sleepTime,
-        wake_time: formData.wakeTime,
-        cleanliness: formData.cleanliness,
-        visitors: formData.visitors,
-        smoking: formData.smoking,
-        // Lifestyle & Activities
-        study_habits: formData.studyHabits,
-        hobbies: formData.hobbies,
-        music_preference: formData.musicPreference,
-        additional_info: formData.additionalInfo,
-        created_at: new Date().toISOString()
-      }
-
-      console.log('Quiz data prepared:', quizData)
-
       // Upload profile image if exists
-      let profile_image_url = null
-      if (formData.profileImage) {
-        console.log('Uploading profile image...')
-        const fileExt = formData.profileImage.name.split('.').pop()
-        const fileName = `${user.id}-${Math.random()}.${fileExt}`
-        const filePath = `profile-images/${fileName}`
+      let profileImageUrl = null
+      const profileImage = fileInputRef.current?.files?.[0] || formData.profileImage
+      
+      if (profileImage) {
+        console.log('Uploading profile image:', profileImage)
+        try {
+          const fileExt = profileImage.name.split('.').pop()
+          const fileName = `${user.id}.${fileExt}`
+          
+          const { error: uploadError } = await supabase.storage
+            .from('profile-images')
+            .upload(fileName, profileImage, { 
+              upsert: true,
+              cacheControl: '3600'
+            })
 
-        const { error: uploadError, data } = await supabase.storage
-          .from('profile-images')
-          .upload(filePath, formData.profileImage)
-
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError)
-          throw uploadError
+          if (uploadError) {
+            console.error('Error uploading image:', uploadError)
+          } else {
+            const { data: { publicUrl } } = supabase.storage
+              .from('profile-images')
+              .getPublicUrl(fileName)
+            
+            profileImageUrl = publicUrl
+            console.log('Image uploaded successfully:', profileImageUrl)
+          }
+        } catch (imageError) {
+          console.error('Error processing image:', imageError)
+          // Continue with form submission even if image upload fails
         }
-
-        profile_image_url = data.path
-        quizData.profile_image_url = profile_image_url
-        console.log('Profile image uploaded:', profile_image_url)
       }
 
-      // Insert the quiz data into the database
-      const { error: insertError } = await supabase
-        .from('user_profiles')
-        .upsert(quizData, { onConflict: 'user_id' })
-
-      if (insertError) {
-        console.error('Error inserting quiz data:', insertError)
-        throw insertError
+      // Format survey responses
+      const surveyResponses = {
+        // Basic Info
+        fullName: formData.fullName || '',
+        age: formData.age || '',
+        university: formData.university || [],
+        year: formData.year || '',
+        countryOfOrigin: formData.countryOfOrigin || '',
+        languages: formData.languages || [],
+        // Living Preferences
+        sleepTime: formData.sleepTime || '',
+        wakeTime: formData.wakeTime || '',
+        cleanliness: formData.cleanliness || '',
+        visitors: formData.visitors || '',
+        smoking: formData.smoking || '',
+        // Lifestyle & Activities
+        studyHabits: formData.studyHabits || '',
+        hobbies: formData.hobbies || [],
+        musicPreference: formData.musicPreference || '',
+        additionalInfo: formData.additionalInfo || ''
       }
 
-      console.log('Quiz data saved successfully')
+      console.log('Saving survey responses:', surveyResponses)
 
-      // Clear stored data after successful submission
+      // Save survey responses with upsert
+      const { error: surveyError } = await supabase
+        .from('survey_responses')
+        .upsert({
+          user_id: user.id,
+          responses: surveyResponses,
+          completed_at: new Date().toISOString()
+        })
+
+      if (surveyError) {
+        console.error('Error saving survey:', surveyError)
+        throw surveyError
+      }
+
+      console.log('Survey responses saved successfully')
+
+      // Update user profile and onboarding status
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          full_name: formData.fullName || '',
+          university: Array.isArray(formData.university) && formData.university.length > 0 
+            ? formData.university[0] 
+            : '',
+          profile_image_url: profileImageUrl,
+          profile_complete: true,
+          onboarded_at: new Date().toISOString()
+        })
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError)
+        throw profileError
+      }
+
+      console.log('Profile updated successfully')
+
+      // Clear local storage
       localStorage.removeItem('quizStep')
       localStorage.removeItem('quizFormData')
       localStorage.removeItem('quizImagePreview')
 
       console.log('Local storage cleared')
 
-      // Navigate to the matching process page
-      console.log('Navigating to matching process page...')
-      navigate('/matching-process')
+      // Redirect to loading page
+      navigate('/loading')
 
     } catch (error) {
       console.error('Error in form submission:', error)
-      alert('There was an error submitting your quiz. Please try again.')
+      // You might want to show an error message to the user here
     }
   }
 

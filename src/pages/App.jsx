@@ -8,6 +8,7 @@ import EmailConfirmation from './EmailConfirmation'
 import VerifyEmail from './VerifyEmail'
 import Quiz from './Quiz'
 import MatchingProcess from './MatchingProcess'
+import LoadingPage from './LoadingPage'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/matching-process" element={<MatchingProcess />} />
+          <Route path="/loading" element={<LoadingPage />} />
         </Routes>
       </div>
       <Footer />
