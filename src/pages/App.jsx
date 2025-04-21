@@ -1,32 +1,18 @@
-import { Routes, Route } from 'react-router-dom'
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
-import Home from './Home'
-import Login from './Login'
-import Register from './Register'
-import EmailConfirmation from './EmailConfirmation'
-import VerifyEmail from './VerifyEmail'
-import Quiz from './Quiz'
-import MatchingProcess from './MatchingProcess'
-import LoadingPage from './LoadingPage'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Waitlist from './Waitlist'
+import Success from './Success'
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
       <div className="flex-grow">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/email-confirmation" element={<EmailConfirmation />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/matching-process" element={<MatchingProcess />} />
-          <Route path="/loading" element={<LoadingPage />} />
+          <Route path="/" element={<Waitlist />} />
+          <Route path="/success" element={<Success />} />
+          {/* Redirect all other routes to waitlist */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-      <Footer />
     </div>
   )
 }
