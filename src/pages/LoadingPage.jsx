@@ -5,10 +5,10 @@ const LoadingPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // After processing is complete, navigate to the dashboard or home
+    // After processing is complete, navigate to the matching process
     const timeout = setTimeout(() => {
-      navigate('/dashboard');
-    }, 5000); // Redirect after 5 seconds
+      navigate('/matching');
+    }, 3000); // Redirect after 3 seconds
 
     return () => clearTimeout(timeout);
   }, [navigate]);

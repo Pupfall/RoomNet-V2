@@ -63,9 +63,11 @@ function Register() {
 
       if (signUpError) throw signUpError
 
+      console.log('Registration successful, redirecting to email confirmation')
       // Redirect to email confirmation page
       navigate('/email-confirmation', { 
-        state: { email: formData.email }
+        state: { email: formData.email },
+        replace: true
       })
 
     } catch (err) {

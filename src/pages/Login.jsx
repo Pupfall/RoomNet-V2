@@ -17,7 +17,7 @@ function Login() {
       setError(null)
       setLoading(true)
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -27,7 +27,8 @@ function Login() {
       }
 
       // Successful login - redirect to quiz
-      navigate('/quiz')
+      console.log('Login successful, redirecting to quiz')
+      navigate('/quiz', { replace: true })
     } catch (err) {
       setError('Invalid email or password')
       console.error('Login error:', err)

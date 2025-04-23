@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
+// Development mode toggle - set to true to bypass authentication
+const DEVELOPMENT_MODE = false;
+
 function Quiz() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
@@ -219,6 +222,74 @@ function Quiz() {
     }
   }, [currentStep, formData, imagePreview])
 
+  // Check if the user has completed the quiz before
+  useEffect(() => {
+    // Skip in development mode
+    if (DEVELOPMENT_MODE) {
+      return;
+    }
+    
+    const checkExistingProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // Check if user has survey responses
+          const { data: surveyData, error: surveyError } = await supabase
+            .from('survey_responses')
+            .select('responses')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (surveyData?.responses) {
+            // Check if we should load existing data
+            const shouldLoad = localStorage.getItem('quizFormData') === null;
+            
+            if (shouldLoad) {
+              console.log('Loading existing profile data');
+              const existingResponses = surveyData.responses;
+              
+              // Set form data from responses
+              setFormData(prev => ({
+                ...prev,
+                fullName: existingResponses.fullName || '',
+                age: existingResponses.age || '',
+                university: existingResponses.university || [],
+                year: existingResponses.year || '',
+                countryOfOrigin: existingResponses.countryOfOrigin || '',
+                languages: existingResponses.languages || [],
+                sleepTime: existingResponses.sleepTime || '',
+                wakeTime: existingResponses.wakeTime || '',
+                cleanliness: existingResponses.cleanliness || '',
+                visitors: existingResponses.visitors || '',
+                smoking: existingResponses.smoking || '',
+                studyHabits: existingResponses.studyHabits || '',
+                hobbies: existingResponses.hobbies || [],
+                musicPreference: existingResponses.musicPreference || '',
+                additionalInfo: existingResponses.additionalInfo || ''
+              }));
+              
+              // Check for profile image
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('profile_image_url')
+                .eq('id', user.id)
+                .single();
+                
+              if (profileData?.profile_image_url) {
+                setImagePreview(profileData.profile_image_url);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking existing profile:', error);
+      }
+    };
+    
+    checkExistingProfile();
+  }, []);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -354,15 +425,48 @@ function Quiz() {
     }))
   }
 
+  const validateForm = () => {
+    // Validate basic info
+    if (currentStep === 3) {
+      if (!formData.studyHabits) return "Please select your study habits";
+      if (!formData.musicPreference) return "Please select your music preference";
+      if (formData.hobbies.length === 0) return "Please add at least one hobby or interest";
+    }
+    else if (currentStep === 2) {
+      if (!formData.sleepTime) return "Please select your typical sleep time";
+      if (!formData.wakeTime) return "Please select your typical wake time";
+      if (!formData.cleanliness) return "Please select your cleanliness level";
+      if (!formData.visitors) return "Please select your visitor preference";
+      if (!formData.smoking) return "Please select your smoking preference";
+    }
+    else if (currentStep === 1) {
+      if (!formData.fullName.trim()) return "Please enter your full name";
+      if (!formData.age) return "Please select your age group";
+      if (!formData.year) return "Please select your year";
+      if (formData.university.length === 0) return "Please select your university";
+      if (!formData.countryOfOrigin) return "Please select your country of origin";
+      if (formData.languages.length === 0) return "Please add at least one language";
+    }
+    return null;
+  };
+
   const handleNext = (e) => {
     if (e) {
-    e.preventDefault()
+      e.preventDefault();
     }
+    
+    // Validate the current step
+    const validationError = validateForm();
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+    
     if (currentStep < 3) {
-      setCurrentStep(currentStep + 1)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }
+  };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
@@ -372,57 +476,80 @@ function Quiz() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    console.log('Starting form submission with data:', formData)
+    e.preventDefault();
+    
+    // Validate the form before submission
+    const validationError = validateForm();
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+    
+    console.log('Starting form submission with data:', formData);
     
     try {
+      // In development mode, skip API calls and just navigate
+      if (DEVELOPMENT_MODE) {
+        console.log('Development mode: Skipping API calls');
+        
+        // Clear local storage
+        localStorage.removeItem('quizStep');
+        localStorage.removeItem('quizFormData');
+        localStorage.removeItem('quizImagePreview');
+        
+        console.log('Local storage cleared');
+        console.log('Redirecting to loading page');
+        navigate('/loading', { replace: true });
+        return;
+      }
+      
       // Get the current user
       const {
         data: { user },
         error: userError
-      } = await supabase.auth.getUser()
+      } = await supabase.auth.getUser();
 
       if (userError) {
-        console.error('Error getting user:', userError)
-        throw userError
+        console.error('Error getting user:', userError);
+        throw userError;
       }
 
       if (!user) {
-        console.error('No user found')
-        return
+        console.error('No user found');
+        return;
       }
 
-      console.log('User authenticated:', user.id)
+      console.log('User authenticated:', user.id);
 
       // Upload profile image if exists
-      let profileImageUrl = null
-      const profileImage = fileInputRef.current?.files?.[0] || formData.profileImage
+      let profileImageUrl = null;
+      const profileImage = fileInputRef.current?.files?.[0] || formData.profileImage;
       
       if (profileImage) {
-        console.log('Uploading profile image:', profileImage)
+        console.log('Uploading profile image:', profileImage);
         try {
-          const fileExt = profileImage.name.split('.').pop()
-          const fileName = `${user.id}.${fileExt}`
+          const fileExt = profileImage.name.split('.').pop();
+          const fileName = `${user.id}.${fileExt}`;
           
           const { error: uploadError } = await supabase.storage
             .from('profile-images')
             .upload(fileName, profileImage, { 
               upsert: true,
               cacheControl: '3600'
-            })
+            });
 
           if (uploadError) {
-            console.error('Error uploading image:', uploadError)
+            console.error('Error uploading image:', uploadError);
           } else {
             const { data: { publicUrl } } = supabase.storage
               .from('profile-images')
-              .getPublicUrl(fileName)
+              .getPublicUrl(fileName);
             
-            profileImageUrl = publicUrl
-            console.log('Image uploaded successfully:', profileImageUrl)
+            profileImageUrl = publicUrl;
+            console.log('Image uploaded successfully:', profileImageUrl);
           }
         } catch (imageError) {
-          console.error('Error processing image:', imageError)
+          console.error('Error processing image:', imageError);
           // Continue with form submission even if image upload fails
         }
       }
@@ -447,9 +574,9 @@ function Quiz() {
         hobbies: formData.hobbies || [],
         musicPreference: formData.musicPreference || '',
         additionalInfo: formData.additionalInfo || ''
-      }
+      };
 
-      console.log('Saving survey responses:', surveyResponses)
+      console.log('Saving survey responses:', surveyResponses);
 
       // Save survey responses with upsert
       const { error: surveyError } = await supabase
@@ -458,14 +585,14 @@ function Quiz() {
           user_id: user.id,
           responses: surveyResponses,
           completed_at: new Date().toISOString()
-        })
+        });
 
       if (surveyError) {
-        console.error('Error saving survey:', surveyError)
-        throw surveyError
+        console.error('Error saving survey:', surveyError);
+        throw surveyError;
       }
 
-      console.log('Survey responses saved successfully')
+      console.log('Survey responses saved successfully');
 
       // Update user profile and onboarding status
       const { error: profileError } = await supabase
@@ -479,30 +606,31 @@ function Quiz() {
           profile_image_url: profileImageUrl,
           profile_complete: true,
           onboarded_at: new Date().toISOString()
-        })
+        });
 
       if (profileError) {
-        console.error('Error updating profile:', profileError)
-        throw profileError
+        console.error('Error updating profile:', profileError);
+        throw profileError;
       }
 
-      console.log('Profile updated successfully')
+      console.log('Profile updated successfully');
 
       // Clear local storage
-      localStorage.removeItem('quizStep')
-      localStorage.removeItem('quizFormData')
-      localStorage.removeItem('quizImagePreview')
+      localStorage.removeItem('quizStep');
+      localStorage.removeItem('quizFormData');
+      localStorage.removeItem('quizImagePreview');
 
-      console.log('Local storage cleared')
+      console.log('Local storage cleared');
 
       // Redirect to loading page
-      navigate('/loading')
+      console.log('Redirecting to loading page');
+      navigate('/loading', { replace: true });
 
     } catch (error) {
-      console.error('Error in form submission:', error)
-      // You might want to show an error message to the user here
+      console.error('Error in form submission:', error);
+      alert('There was an error submitting the quiz. Please try again.');
     }
-  }
+  };
 
   const handleStudyHabitSelect = (habitId) => {
     setFormData(prev => ({

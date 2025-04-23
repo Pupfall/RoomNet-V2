@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 
+// Development mode toggle - set to true to bypass authentication
+const DEVELOPMENT_MODE = false;
+
 const matchingSteps = [
   {
     id: 1,
@@ -38,25 +41,35 @@ export default function MatchingProcess() {
         for (let i = 0; i < matchingSteps.length; i++) {
           timer = setTimeout(() => {
             setCurrentStep(i)
-          }, i * 3000) // Each step takes 3 seconds
+          }, i * 2000) // Each step takes 2 seconds
         }
 
-        // After all steps, wait 2 seconds before starting the actual matching
-        setTimeout(async () => {
-          const { data: { user } } = await supabase.auth.getUser()
-          
-          if (!user) {
-            throw new Error('No user logged in')
+        // After all steps, wait 1 second before navigating to matches
+        setTimeout(() => {
+          if (DEVELOPMENT_MODE) {
+            console.log('Development mode: Navigating to matches page');
+            navigate('/matches', { replace: true });
+            return;
           }
-
-          // Start the matching process
-          // This would call your matching function from earlier
-          // For now, we'll simulate it with a timeout
-          setTimeout(() => {
-            navigate('/matches')
-          }, 2000)
-
-        }, matchingSteps.length * 3000)
+          
+          const checkUserAndNavigate = async () => {
+            try {
+              const { data: { user } } = await supabase.auth.getUser()
+              
+              if (!user) {
+                throw new Error('No user logged in')
+              }
+              
+              console.log('User authenticated, navigating to matches page')
+              navigate('/matches', { replace: true })
+            } catch (error) {
+              console.error('Error checking user:', error)
+              setError(error.message)
+            }
+          }
+          
+          checkUserAndNavigate()
+        }, matchingSteps.length * 2000 + 1000)
 
       } catch (error) {
         console.error('Error in matching process:', error)
@@ -67,7 +80,7 @@ export default function MatchingProcess() {
     startMatching()
 
     return () => {
-      clearTimeout(timer)
+      if (timer) clearTimeout(timer)
     }
   }, [navigate])
 
