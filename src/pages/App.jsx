@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 // Pages
@@ -113,6 +113,85 @@ function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showDevBanner, setShowDevBanner] = useState(DEVELOPMENT_MODE)
+
+  // --- BEGIN: Realtime queue for survey completions ---
+  const queue = useRef([]);
+  const isProcessing = useRef(false);
+
+  const processQueue = async () => {
+    if (isProcessing.current || queue.current.length === 0) {
+      return;
+    }
+
+    isProcessing.current = true;
+
+    while (queue.current.length > 0) {
+      const userId = queue.current.shift();
+      console.log('Processing user_id from queue:', userId);
+
+      try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/handle-survey-completion`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`
+          },
+          body: JSON.stringify({ user_id: userId })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Successfully processed:', result);
+      } catch (error) {
+        console.error('Error processing user:', userId, error);
+        // Retry failed user by putting back at the end of queue
+        queue.current.push(userId);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // wait 5 seconds before retry
+      }
+    }
+
+    isProcessing.current = false;
+  };
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('survey-completions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'survey_responses'
+        },
+        (payload) => {
+          console.log('Survey response update detected:', payload);
+
+          const newRecord = payload.new;
+          const oldRecord = payload.old;
+
+          const userId = newRecord.user_id;
+          const completedNow = newRecord.completed_at;
+          const wasIncomplete = !oldRecord.completed_at;
+
+          if (userId && completedNow && wasIncomplete) {
+            console.log('Survey just completed! Queuing user_id:', userId);
+            queue.current.push(userId);
+            processQueue();
+          } else {
+            console.log('Update ignored — survey not newly completed.');
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
+  // --- END: Realtime queue for survey completions ---
 
   useEffect(() => {
     // If in development mode, skip auth check
